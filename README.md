@@ -2,11 +2,15 @@
 Criação do editeusuario.php
 
 <?php
+// Inclui arquivos de segurança, cabeçalho da página e conexão com o banco de dados //
 include('segurancadez.php');
 include('cabecalho.php');
 include('conn.php');
 
+// Verifica se o formulário foi enviado via POST (edição confirmada) //
 if($_SERVER['REQUEST_METHOD']=='POST'){
+
+    // Captura os dados enviados pelo formulário //
     $id = $_POST['id'];
     $nome = $_POST['nome'];
     $apelido = $_POST['apelido'];
@@ -22,31 +26,42 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
     $telefone = $_POST['telefone'];
     $nivel = $_POST['nivel'];
 
-    $sql = "UPDATE `tb_usuarios` 
+     $sql = "UPDATE `tb_usuarios` 
     SET `nome_usuario`='$nome',`apelido_usuario`='$apelido',`cpf_usuario`='$cpf',
     `email_usuario`='$email',`cep_usuario`='$cep',`rua_usuario`='$rua',`numero_rua_usuario`='$numero',
     `bairro_usuario`='$bairro',`cidade_usuario`='$cidade',`uf_usuario`='$uf',`nascimento_usuario`='$nascimento',
     `telefone_usuario`='$telefone',`nivel_usuario`='$nivel' WHERE id_usuario = $id";
-    
-    mysqli_query($link,$sql);
+
+    // Executa a atualização no banco //
+    mysqli_query($link, $sql);
     mysqli_close($link);
-
+    // Redireciona para a lista de usuários após a atualização //
     header('Location: listausuarios.php');
-
     exit();
 }
 
+// Se não houver ID via GET, redireciona para a lista //
 if(!isset($_GET['id'])){
     header('Location: listausuarios.php');
     exit();
 }
 
+// Obtém os dados do usuário para preencher o formulário //
+include('conn.php'); // Inclui a conexão com o banco de dados //
 $id = $_GET['id'];
 $sql = "SELECT * FROM tb_usuarios WHERE id_usuario = $id";
-$result = mysqli_query($link,$sql);
-$tbl = mysqli_fetch_array($result);
+$result = mysqli_query($link, $sql);
+$tbl = mysqli_fetch_array($result); // Armazena os dados do usuário //
+if(!$tbl){
+    // Se não encontrar o usuário, redireciona para a lista //
+    mysqli_close($link);
+    header('Location: listausuarios.php');
+    exit();
+}
+// Fecha a conexão com o banco de dados //
 mysqli_close($link);
 ?>
+
 
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -114,10 +129,11 @@ mysqli_close($link);
         document.addEventListener("DOMContentLoaded", function() {
             const cepInput = document.getElementById("cep");
  
-  cepInput.addEventListener("blur", function() {
-                let cep = cepInput.value.replace(/\D/g, ''); // Remove tudo que não é número
+cepInput.addEventListener("blur", function() {
+                let cep = cepInput.value.replace(/\D/g, ''); // Remove tudo que não é número //
  
-  if (cep.length === 8) { // Valida se são 8 dígitos
+if (cep.length === 8) { // Valida se são 8 dígitos //
+                    // Faz a requisição para a API ViaCEP //
                     fetch(`https://viacep.com.br/ws/${cep}/json/`)
                         .then(response => {
                             if (!response.ok) {
@@ -130,7 +146,7 @@ mysqli_close($link);
                                 alert("CEP não encontrado.");
                                 return;
                             }
-                            // Preenche os campos do formulário
+                            // Preenche os campos do formulário //
                             document.getElementById("rua").value = data.logradouro;
                             document.getElementById("bairro").value = data.bairro;
                             document.getElementById("cidade").value = data.localidade;
